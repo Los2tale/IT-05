@@ -8,13 +8,24 @@ namespace IT_05.Server.Models;
 
 public partial class IT_05Context : DbContext
 {
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        => optionsBuilder.UseSqlServer("Data Source=localhost\\SQLEXPRESS;Initial Catalog=IT_05;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Command Timeout=0");
+    public IT_05Context()
+    {
+    }
 
+    public IT_05Context(DbContextOptions<IT_05Context> options)
+        : base(options)
+    {
+    }
 
     public virtual DbSet<queue> queues { get; set; }
 
     public virtual DbSet<ticket> tickets { get; set; }
+
+
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        => optionsBuilder.UseSqlServer("Data Source=localhost\\SQLEXPRESS;Initial Catalog=IT_05;Integrated Security=True;Persist Security Info=False;Pooling=False;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=True;Command Timeout=0");
+
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -30,6 +41,8 @@ public partial class IT_05Context : DbContext
         modelBuilder.Entity<ticket>(entity =>
         {
             entity.HasKey(e => e.id).HasName("PK__tickets__3213E83F2DEC35F7");
+
+            entity.ToTable(tb => tb.HasTrigger("trg_AfterInsert"));
 
             entity.HasIndex(e => new { e.queue_id, e.created_at }, "IX_Tickets_ActiveQueue").HasFilter("([status]='PENDING')");
 
