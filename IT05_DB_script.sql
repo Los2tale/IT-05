@@ -57,3 +57,24 @@ CREATE INDEX IX_Tickets_ActiveQueue
 ON tickets (queue_id, created_at) 
 WHERE status = 'PENDING';
 GO
+
+CREATE TRIGGER trg_AfterInsert
+ON tickets
+AFTER INSERT
+AS
+BEGIN
+    SET NOCOUNT ON;
+
+    IF EXISTS (
+        SELECT 1
+        FROM [dbo].tickets AS T
+        INNER JOIN inserted AS I 
+            ON I.queue_id = T.queue_id
+            AND I.id <> T.id 
+            AND CAST(CAST(I.created_at AS DATE) AS DATETIME) = CAST(CAST(T.created_at AS DATE) AS DATETIME)
+    )
+    BEGIN
+        ROLLBACK TRANSACTION;
+        RAISERROR ('Duplicate foreign key data exists. Insertion cancelled.', 16, 1);
+    END
+END;
